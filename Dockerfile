@@ -41,7 +41,6 @@ RUN ln -s /usr/bin/python3.10 /usr/bin/python
 # Install Worker dependencies
 RUN pip install requests runpod
 
-RUN pip3 install torch==2.4.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/test/cu118
 # Add RunPod Handler and Docker container start script
 COPY start.sh rp_handler.py ./
 
