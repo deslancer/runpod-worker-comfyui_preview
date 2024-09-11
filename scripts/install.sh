@@ -65,13 +65,5 @@ wget https://huggingface.co/lllyasviel/ControlNet-v1-1/resolve/main/control_v11p
 wget https://huggingface.co/ioclab/ioc-controlnet/resolve/main/models/control_v1p_sd15_brightness.safetensors
 wget https://huggingface.co/lllyasviel/ControlNet-v1-1/resolve/main/control_v11f1e_sd15_tile.pth
 
-echo "Downloading SDXL ControlNet models"
-wget https://huggingface.co/lllyasviel/sd_control_collection/resolve/main/diffusers_xl_canny_full.safetensors
-
-echo "Downloading Upscalers"
-cd /workspace/ComfyUI/models/upscale_models
-wget https://huggingface.co/ashleykleynhans/upscalers/resolve/main/4x-UltraSharp.pth
-wget https://huggingface.co/ashleykleynhans/upscalers/resolve/main/lollypop.pth
-
 echo "Creating log directory"
 mkdir -p /workspace/logs
