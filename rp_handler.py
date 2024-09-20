@@ -13,10 +13,9 @@ from runpod.serverless.modules.rp_logger import RunPodLogger
 from requests.adapters import HTTPAdapter, Retry
 from schemas.input import INPUT_SCHEMA
 
-
 BASE_URI = 'http://127.0.0.1:3000'
 VOLUME_MOUNT_PATH = '/runpod-volume'
-LOG_FILE= 'comfyui-worker.log'
+LOG_FILE = 'comfyui-worker.log'
 TIMEOUT = 600
 LOG_LEVEL = 'INFO'
 
@@ -62,6 +61,7 @@ def send_post_request(endpoint, payload):
         json=payload,
         timeout=TIMEOUT
     )
+
 
 def get_txt2img_payload(workflow, payload):
     workflow["3"]["inputs"]["seed"] = payload["seed"]
@@ -111,6 +111,8 @@ def get_workflow_payload(workflow_name, payload):
 """
 Get the filenames of the output images
 """
+
+
 def get_filenames(output):
     for key, value in output.items():
         if 'images' in value and isinstance(value['images'], list):
@@ -122,12 +124,37 @@ Create a unique filename prefix for each request to avoid a race condition where
 more than one request completes at the same time, which can either result in the
 incorrect output being returned, or the output image not being found.
 """
+
+
 def create_unique_filename_prefix(payload):
     for key, value in payload.items():
         class_type = value.get('class_type')
 
         if class_type == 'SaveImage':
             payload[key]['inputs']['filename_prefix'] = str(uuid.uuid4())
+
+
+# Function to determine MIME type based on the file extension
+def get_mime_type(file_name):
+    extension = os.path.splitext(file_name)[1].lower()
+    if extension == '.png':
+        return 'image/png'
+    elif extension == '.jpg' or extension == '.jpeg':
+        return 'image/jpeg'
+    elif extension == '.gif':
+        return 'image/gif'
+    else:
+        return 'application/octet-stream'  # Fallback if unknown extension
+
+
+def image_to_base64(image_path):
+    if os.path.exists(image_path):
+        with open(image_path, "rb") as img_file:
+            base64_str = base64.b64encode(img_file.read()).decode('utf-8')
+        mime_type = get_mime_type(image_path)
+        return f"data:{mime_type};base64,{base64_str}"
+    else:
+        return None
 
 
 # ---------------------------------------------------------------------------- #
@@ -194,26 +221,29 @@ def handler(event):
 
             if status['status_str'] == 'success' and status['completed']:
                 # Job was processed successfully
-                outputs = resp_json[prompt_id]['outputs']
+                json_data = resp_json[prompt_id]
+                rp_logger.info(f'Images generated successfully for prompt: {prompt_id}', job_id)
+                for output_key in json_data['outputs']:
+                    output_data = json_data['outputs'][output_key]
 
-                if len(outputs):
-                    rp_logger.info(f'Images generated successfully for prompt: {prompt_id}', job_id)
-                    image_filenames = get_filenames(outputs)
-                    images = []
+                    if 'images' in output_data:
+                        images = output_data['images']
 
-                    for image_filename in image_filenames:
-                        filename = image_filename['filename']
-                        image_path = f'{VOLUME_MOUNT_PATH}/ComfyUI/output/{filename}'
+                        for image in images:
+                            image_filename = image['filename']
+                            image_path = f"{VOLUME_MOUNT_PATH}/ComfyUI/{image['type']}/{image_filename}"
+                            base64_data = image_to_base64(image_path)
+                            rp_logger.info(f'Deleting output file: {image_path}', job_id)
+                            os.remove(image_path)
+                            if base64_data:
+                                image['base64'] = base64_data
+                            else:
+                                image['base64'] = "Image file not found"
 
-                        with open(image_path, 'rb') as image_file:
-                            images.append(base64.b64encode(image_file.read()).decode('utf-8'))
+                            return json_data
+                    else:
+                        print(f"No images found for output key {output_key}")
 
-                        rp_logger.info(f'Deleting output file: {image_path}', job_id)
-                        os.remove(image_path)
-
-                    return {
-                        'images': images
-                    }
                 else:
                     raise RuntimeError(f'No output found for prompt id: {prompt_id}')
             else:
