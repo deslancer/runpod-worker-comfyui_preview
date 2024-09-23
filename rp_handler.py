@@ -220,31 +220,45 @@ def handler(event):
             status = resp_json[prompt_id]['status']
 
             if status['status_str'] == 'success' and status['completed']:
-                # Job was processed successfully
-                json_data = resp_json[prompt_id]
-                rp_logger.info(f'Images generated successfully for prompt: {prompt_id}', job_id)
-                for output_key in json_data['outputs']:
-                    output_data = json_data['outputs'][output_key]
+                if status['status_str'] == 'success' and status['completed']:
+                    # Job was processed successfully
+                    json_data = resp_json[prompt_id]
+                    rp_logger.info(f'Images generated successfully for prompt: {prompt_id}', job_id)
 
-                    if 'images' in output_data:
-                        images = output_data['images']
+                    # Loop over all outputs
+                    for output_key in json_data['outputs']:
+                        output_data = json_data['outputs'][output_key]
 
-                        for image in images:
-                            image_filename = image['filename']
-                            image_path = f"{VOLUME_MOUNT_PATH}/ComfyUI/{image['type']}/{image_filename}"
-                            base64_data = image_to_base64(image_path)
+                        # Check if 'images' exist in the output data
+                        if 'images' in output_data:
+                            images = output_data['images']
 
-                            if base64_data:
-                                image['base64'] = base64_data
-                                #rp_logger.info(f'Deleting output file: {image_path}', job_id)
-                                #os.remove(image_path)
-                            else:
-                                image['base64'] = "Image file not found"
+                            # Loop over each image in 'images'
+                            for image in images:
+                                image_filename = image['filename']
+                                image_path = f"{VOLUME_MOUNT_PATH}/ComfyUI/{image['type']}/{image_filename}"
 
-                            return json_data
-                    else:
-                        print(f"No images found for output key {output_key}")
+                                # Convert image to base64
+                                base64_data = image_to_base64(image_path)
 
+                                # Log and delete the image file after encoding
+                                rp_logger.info(f'Deleting output file: {image_path}', job_id)
+                                os.remove(image_path)
+
+                                # Assign the base64 data to the image, or set an error message if not found
+                                if base64_data:
+                                    image['base64'] = base64_data
+                                else:
+                                    image['base64'] = "Image file not found"
+
+                        else:
+                            # If no images are found for this output key, log a warning
+                            rp_logger.warning(f"No images found for output key {output_key}", job_id)
+
+                    # Return the full json_data after processing all output keys
+                    return json_data
+
+                # If status is not 'success' or job is not complete, raise an error
                 else:
                     raise RuntimeError(f'No output found for prompt id: {prompt_id}')
             else:
