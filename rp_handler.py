@@ -233,10 +233,11 @@ def handler(event):
                             image_filename = image['filename']
                             image_path = f"{VOLUME_MOUNT_PATH}/ComfyUI/{image['type']}/{image_filename}"
                             base64_data = image_to_base64(image_path)
-                            rp_logger.info(f'Deleting output file: {image_path}', job_id)
-                            os.remove(image_path)
+
                             if base64_data:
                                 image['base64'] = base64_data
+                                #rp_logger.info(f'Deleting output file: {image_path}', job_id)
+                                #os.remove(image_path)
                             else:
                                 image['base64'] = "Image file not found"
 
