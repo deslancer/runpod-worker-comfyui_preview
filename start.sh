@@ -14,6 +14,8 @@ export PYTHONUNBUFFERED=true
 export HF_HOME="/workspace"
 cd /workspace/ComfyUI
 python main.py --port 3000 > /workspace/logs/comfyui.log 2>&1 &
+python custom_nodes/ComfyUI-Manager/cm-cli.py fix all &
+python custom_nodes/ComfyUI-Manager/cm-cli.py show installed &
 deactivate
 
 echo "Starting RunPod Handler"
