@@ -13,9 +13,22 @@ export LD_PRELOAD="${TCMALLOC}"
 export PYTHONUNBUFFERED=true
 export HF_HOME="/workspace"
 cd /workspace/ComfyUI
+
+# Start the first command in the background and capture its PID
 python main.py --port 3000 > /workspace/logs/comfyui.log 2>&1 &
+pid1=$!
+
+# Start the second command in the background and capture its PID
 python custom_nodes/ComfyUI-Manager/cm-cli.py fix all &
-python custom_nodes/ComfyUI-Manager/cm-cli.py show installed &
+pid2=$!
+
+# Wait for both background jobs to finish before proceeding
+wait $pid1
+wait $pid2
+
+# Now run the third command after both background jobs are done
+python custom_nodes/ComfyUI-Manager/cm-cli.py show installed
+
 deactivate
 
 echo "Starting RunPod Handler"
