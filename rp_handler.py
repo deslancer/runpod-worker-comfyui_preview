@@ -253,7 +253,7 @@ def handler(event):
 
                         else:
                             # If no images are found for this output key, log a warning
-                            rp_logger.warning(f"No images found for output key {output_key}", job_id)
+                            rp_logger.info(f"No images found for output key {output_key}", job_id)
 
                     # Return the full json_data after processing all output keys
                     return json_data
