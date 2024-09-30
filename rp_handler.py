@@ -157,9 +157,10 @@ def image_to_base64(image_path):
         return None
 
 
-def upload_img(image_path):
+def upload_img(image_path, img_type):
+    bucket = 'ai-generated' if img_type == 'output' else 'drafts'
     data = {
-        'bucketId': 'ai-generated',
+        'bucketId': bucket,
         'contentType': "image/png",
     }
 
@@ -264,7 +265,7 @@ def handler(event):
                                 image_filename = image['filename']
                                 image_path = f"{VOLUME_MOUNT_PATH}/ComfyUI/{image['type']}/{image_filename}"
                                 # Upload image to supabase
-                                image_url = upload_img(image_path)
+                                image_url = upload_img(image_path, image['type'])['urls'][0]
 
                                 # Log and delete the image file after encoding
                                 rp_logger.info(f'Deleting output file: {image_path}', job_id)
