@@ -264,7 +264,7 @@ def handler(event):
                                 image_filename = image['filename']
                                 image_path = f"{VOLUME_MOUNT_PATH}/ComfyUI/{image['type']}/{image_filename}"
                                 # Upload image to supabase
-                                image_url = upload_img(image_path).urls[0]
+                                image_url = upload_img(image_path)
 
                                 # Log and delete the image file after encoding
                                 rp_logger.info(f'Deleting output file: {image_path}', job_id)
