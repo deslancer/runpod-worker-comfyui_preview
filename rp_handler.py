@@ -12,7 +12,7 @@ from runpod.serverless.utils.rp_validator import validate
 from runpod.serverless.modules.rp_logger import RunPodLogger
 from requests.adapters import HTTPAdapter, Retry
 from schemas.input import INPUT_SCHEMA
-
+API_URL = 'https://metaflow3d.visionexp.io/api/v2'
 BASE_URI = 'http://127.0.0.1:3000'
 VOLUME_MOUNT_PATH = '/runpod-volume'
 LOG_FILE = 'comfyui-worker.log'
@@ -157,6 +157,32 @@ def image_to_base64(image_path):
         return None
 
 
+def upload_img(image_path):
+    data = {
+        'bucketId': 'ai-generated',
+        'contentType': "image/png",
+    }
+
+    if os.path.exists(image_path):
+        with open(image_path, "rb") as img_file:
+            files = {
+                'assets': (img_file.name, img_file, "image/png")
+            }
+            response = requests.post(API_URL + '/assets/upload', files=files, data=data)
+            print(response)
+            if response.status_code == 200:
+                data = response.json()
+                print('Upload successful:', data)
+                return data
+            else:
+                print('Error uploading file:', response.status_code, response.text)
+    else:
+        print('File in not exists')
+        return None
+
+
+
+
 # ---------------------------------------------------------------------------- #
 #                                RunPod Handler                                #
 # ---------------------------------------------------------------------------- #
@@ -237,19 +263,18 @@ def handler(event):
                             for image in images:
                                 image_filename = image['filename']
                                 image_path = f"{VOLUME_MOUNT_PATH}/ComfyUI/{image['type']}/{image_filename}"
-
-                                # Convert image to base64
-                                base64_data = image_to_base64(image_path)
+                                # Upload image to supabase
+                                image_url = upload_img(image_path).urls[0]
 
                                 # Log and delete the image file after encoding
                                 rp_logger.info(f'Deleting output file: {image_path}', job_id)
                                 os.remove(image_path)
 
                                 # Assign the base64 data to the image, or set an error message if not found
-                                if base64_data:
-                                    image['base64'] = base64_data
+                                if image_url:
+                                    image['url'] = image_url
                                 else:
-                                    image['base64'] = "Image file not found"
+                                    image['url'] = "Image file not found"
 
                         else:
                             # If no images are found for this output key, log a warning
