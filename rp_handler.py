@@ -264,18 +264,23 @@ def handler(event):
                             for image in images:
                                 image_filename = image['filename']
                                 image_path = f"{VOLUME_MOUNT_PATH}/ComfyUI/{image['type']}/{image_filename}"
-                                # Upload image to supabase
-                                image_url = upload_img(image_path, image['type'])['urls'][0]
 
-                                # Log and delete the image file after encoding
+                                try:
+                                    result = upload_img(image_path, image['type'])
+                                    if result and 'urls' in result and result['urls']:
+                                        image['url'] = result['urls'][0]
+                                    else:
+                                        base64_data = image_to_base64(image_path)
+                                        if base64_data:
+                                            image['base64'] = base64_data
+                                except Exception as e:
+                                    # Log the error or handle it accordingly
+                                    print(f"Error occurred during image processing: {e}")
+
                                 rp_logger.info(f'Deleting output file: {image_path}', job_id)
                                 os.remove(image_path)
 
-                                # Assign the base64 data to the image, or set an error message if not found
-                                if image_url:
-                                    image['url'] = image_url
-                                else:
-                                    image['url'] = "Image file not found"
+
 
                         else:
                             # If no images are found for this output key, log a warning
