@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import requests
 import traceback
@@ -182,6 +183,18 @@ def upload_img(image_path, img_type):
         return None
 
 
+def check_environment():
+    print(f"Python version: {sys.version}")
+    print(f"Python executable: {sys.executable}")
+    print(f"Sys path: {sys.path}")
+    print(f"Environment variables: {os.environ}")
+
+    try:
+        import accelerate
+        print(f"Accelerate version: {accelerate.__version__}")
+        print(f"Accelerate path: {accelerate.__file__}")
+    except ImportError:
+        print("Accelerate not found")
 
 
 # ---------------------------------------------------------------------------- #
@@ -334,6 +347,7 @@ def handler(event):
 
 if __name__ == '__main__':
     # Setup log file
+    check_environment()
     logging.getLogger().setLevel(LOG_LEVEL)
     log_handler = logging.handlers.WatchedFileHandler(f'{VOLUME_MOUNT_PATH}/{LOG_FILE}')
     formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(message)s')
