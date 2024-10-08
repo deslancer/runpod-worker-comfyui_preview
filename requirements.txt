@@ -1,4 +1,5 @@
 Pillow
 requests
 python-dotenv
+accelerate
 runpod
