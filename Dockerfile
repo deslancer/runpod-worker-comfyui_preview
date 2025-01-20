@@ -1,11 +1,8 @@
 FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04
-
 ENV DEBIAN_FRONTEND=noninteractive \
     PIP_PREFER_BINARY=1 \
     PYTHONUNBUFFERED=1
-
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-
 WORKDIR /
 
 # Upgrade apt packages and install required dependencies
@@ -30,7 +27,14 @@ RUN apt update && \
       ffmpeg \
       libgoogle-perftools4 \
       libtcmalloc-minimal4 \
-      procps && \
+      procps \
+      # Добавляем зависимости для ComfyUI и нод
+      python3-opencv \
+      libglib2.0-0 \
+      build-essential \
+      python3-venv \
+      nodejs \
+      npm && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get clean -y
@@ -38,10 +42,18 @@ RUN apt update && \
 # Set Python
 RUN ln -s /usr/bin/python3.10 /usr/bin/python
 
-# Install Worker dependencies
-RUN pip install requests runpod
-
-RUN pip install git+https://github.com/huggingface/accelerate
+# Install Python packages required for ComfyUI and nodes
+RUN pip install --no-cache-dir \
+    torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118 \
+    opencv-python-headless \
+    pillow \
+    transformers \
+    safetensors \
+    aiohttp \
+    numpy \
+    requests \
+    runpod \
+    git+https://github.com/huggingface/accelerate
 
 # Add RunPod Handler and Docker container start script
 COPY start.sh rp_handler.py ./
@@ -51,6 +63,10 @@ COPY schemas /schemas
 
 # Add workflows
 COPY workflows /workflows
+
+# Ensure proper permissions for mounted volume
+RUN mkdir -p /runpod-volume && \
+    chmod 777 /runpod-volume
 
 # Start the container
 RUN chmod +x /start.sh
