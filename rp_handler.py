@@ -13,6 +13,7 @@ from runpod.serverless.utils.rp_validator import validate
 from runpod.serverless.modules.rp_logger import RunPodLogger
 from requests.adapters import HTTPAdapter, Retry
 from schemas.input import INPUT_SCHEMA
+
 API_URL = 'https://metaflow3d.visionexp.io/api/v2'
 BASE_URI = 'http://127.0.0.1:3000'
 VOLUME_MOUNT_PATH = '/runpod-volume'
@@ -264,6 +265,7 @@ def handler(event):
                     # Job was processed successfully
                     json_data = resp_json[prompt_id]
                     rp_logger.info(f'Images generated successfully for prompt: {prompt_id}', job_id)
+                    rp_logger.debug(f'response json_data for: {prompt_id}', json_data)
 
                     # Loop over all outputs
                     for output_key in json_data['outputs']:
