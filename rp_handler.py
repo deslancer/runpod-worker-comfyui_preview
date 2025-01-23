@@ -293,7 +293,11 @@ def handler(event):
                                     print(f"Error occurred during image processing: {e}")
 
                                 rp_logger.info(f'Deleting output file: {image_path}', job_id)
-                                os.remove(image_path)
+                                try:
+                                    os.remove(image_path)
+                                except FileNotFoundError:
+                                    rp_logger.warning(f"File {image_path} not found")
+                                    pass
 
 
 
