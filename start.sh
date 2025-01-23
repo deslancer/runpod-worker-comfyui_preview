@@ -36,9 +36,11 @@ cd /workspace/ComfyUI
 
 # Очистка кэша Python перед запуском
 find . -type d -name "__pycache__" -exec rm -r {} + 2>/dev/null || true
-
+pip install color-matcher
 echo "Starting ComfyUI API"
-python main.py --port 3000 > /workspace/logs/comfyui.log 2>&1 &
+# shellcheck disable=SC2046
+python main.py --port 3000 > /workspace/logs/comfyui_$(date +%Y-%m-%d_%H-%M-%S).log 2>&1 &
+
 
 deactivate
 

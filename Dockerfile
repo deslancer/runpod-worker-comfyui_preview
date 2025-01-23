@@ -51,7 +51,7 @@ RUN pip install --no-cache-dir \
     safetensors \
     aiohttp \
     numpy
-
+RUN pip install color-matcher
 # Установка runpod и accelerate
 RUN pip install --no-cache-dir requests runpod && \
     pip install --no-cache-dir git+https://github.com/huggingface/accelerate
